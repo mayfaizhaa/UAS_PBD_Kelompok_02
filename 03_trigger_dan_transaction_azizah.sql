@@ -1,5 +1,10 @@
--- File: 03_trigger_dan_transaction_azizah.sql
+-- =====================================================================
+-- FILE 03 — TRIGGER & TRANSACTION CONTROL (REVISI)
 -- PIC: Azizah
+-- Perubahan dari versi asli:
+--   1. Trigger audit log kini mengisi kolom user_db secara eksplisit
+--      (mencatat siapa/koneksi mana yang melakukan perubahan)
+-- =====================================================================
 
 USE kasir_minimarket;
 
@@ -38,27 +43,31 @@ BEGIN
 END$$
 
 -- Trigger audit log untuk update produk
+-- REVISI: kolom user_db diisi eksplisit dengan CURRENT_USER()
 CREATE TRIGGER trg_audit_update_produk
 AFTER UPDATE ON produk
 FOR EACH ROW
 BEGIN
-    INSERT INTO audit_log (nama_tabel, aksi, id_data, data_lama, data_baru)
+    INSERT INTO audit_log (nama_tabel, aksi, id_data, data_lama, data_baru, user_db)
     VALUES (
         'produk', 'UPDATE', OLD.produk_id,
         CONCAT('nama:', OLD.nama_produk, ', harga:', OLD.harga, ', stok:', OLD.stok),
-        CONCAT('nama:', NEW.nama_produk, ', harga:', NEW.harga, ', stok:', NEW.stok)
+        CONCAT('nama:', NEW.nama_produk, ', harga:', NEW.harga, ', stok:', NEW.stok),
+        CURRENT_USER()
     );
 END$$
 
 -- Trigger audit log untuk insert transaksi
+-- REVISI: kolom user_db diisi eksplisit dengan CURRENT_USER()
 CREATE TRIGGER trg_audit_insert_transaksi
 AFTER INSERT ON transaksi
 FOR EACH ROW
 BEGIN
-    INSERT INTO audit_log (nama_tabel, aksi, id_data, data_baru)
+    INSERT INTO audit_log (nama_tabel, aksi, id_data, data_baru, user_db)
     VALUES (
         'transaksi', 'INSERT', NEW.transaksi_id,
-        CONCAT('pelanggan_id:', IFNULL(NEW.pelanggan_id, 0), ', status:', NEW.status)
+        CONCAT('pelanggan_id:', IFNULL(NEW.pelanggan_id, 0), ', status:', NEW.status),
+        CURRENT_USER()
     );
 END$$
 
