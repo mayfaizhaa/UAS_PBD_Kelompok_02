@@ -85,3 +85,4 @@ SET @trx_manual = LAST_INSERT_ID();
 
 UPDATE transaksi SET total_bayar = 0 WHERE transaksi_id = @trx_manual;
 COMMIT;
+
