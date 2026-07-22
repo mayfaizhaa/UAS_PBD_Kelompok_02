@@ -13,26 +13,24 @@ CREATE TABLE produk (
     nama_produk   VARCHAR(100) NOT NULL,
     harga         DECIMAL(12,2) NOT NULL,
     stok          INT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_produk_kategori
-        FOREIGN KEY (kategori_id) REFERENCES kategori(kategori_id),
-    CONSTRAINT chk_produk_harga CHECK (harga > 0),
-    CONSTRAINT chk_produk_stok CHECK (stok >= 0)
+    CONSTRAINT fk_produk_kategori FOREIGN KEY (kategori_id) REFERENCES kategori(kategori_id),
+    CONSTRAINT chk_harga CHECK (harga > 0),
+    CONSTRAINT chk_stok  CHECK (stok >= 0)
 );
 
 CREATE TABLE pelanggan (
     pelanggan_id   INT AUTO_INCREMENT PRIMARY KEY,
     nama_pelanggan VARCHAR(100) NOT NULL,
-    no_hp          VARCHAR(20) UNIQUE,
-    poin           INT DEFAULT 0
+    no_hp          VARCHAR(20),
+    poin           INT DEFAULT 0,
+    CONSTRAINT uq_no_hp UNIQUE (no_hp)
 );
 
 CREATE TABLE diskon (
     diskon_id      INT AUTO_INCREMENT PRIMARY KEY,
     min_qty        INT NOT NULL,
     persen_diskon  DECIMAL(5,2) NOT NULL,
-    keterangan     VARCHAR(100),
-    CONSTRAINT chk_diskon_qty CHECK (min_qty > 0),
-    CONSTRAINT chk_diskon_persen CHECK (persen_diskon BETWEEN 0 AND 100)
+    keterangan     VARCHAR(100)
 );
 
 CREATE TABLE transaksi (
@@ -43,8 +41,7 @@ CREATE TABLE transaksi (
     total_diskon        DECIMAL(12,2) DEFAULT 0,
     total_bayar          DECIMAL(12,2) DEFAULT 0,
     status               VARCHAR(20) DEFAULT 'PROSES',
-    CONSTRAINT fk_transaksi_pelanggan
-        FOREIGN KEY (pelanggan_id) REFERENCES pelanggan(pelanggan_id)
+    CONSTRAINT fk_transaksi_pelanggan FOREIGN KEY (pelanggan_id) REFERENCES pelanggan(pelanggan_id)
 );
 
 CREATE TABLE detail_transaksi (
@@ -54,12 +51,10 @@ CREATE TABLE detail_transaksi (
     qty           INT NOT NULL,
     harga_satuan  DECIMAL(12,2) NOT NULL,
     subtotal      DECIMAL(12,2) NOT NULL,
-    CONSTRAINT fk_detail_transaksi
-        FOREIGN KEY (transaksi_id) REFERENCES transaksi(transaksi_id),
-    CONSTRAINT fk_detail_produk
-        FOREIGN KEY (produk_id) REFERENCES produk(produk_id),
-    -- REVISI: qty pembelian minimal 1
-    CONSTRAINT chk_detail_qty CHECK (qty > 0)
+    CONSTRAINT fk_detail_transaksi FOREIGN KEY (transaksi_id) REFERENCES transaksi(transaksi_id),
+    CONSTRAINT fk_detail_produk FOREIGN KEY (produk_id) REFERENCES produk(produk_id),
+    CONSTRAINT chk_qty CHECK (qty > 0),
+    CONSTRAINT chk_subtotal CHECK (subtotal >= 0)
 );
 
 CREATE TABLE audit_log (
@@ -69,9 +64,8 @@ CREATE TABLE audit_log (
     id_data     INT,
     data_lama   TEXT,
     data_baru   TEXT,
-    -- REVISI: kolom baru untuk mencatat user/koneksi yang melakukan perubahan
-    user_db     VARCHAR(50) DEFAULT (CURRENT_USER()),
-    waktu       DATETIME DEFAULT CURRENT_TIMESTAMP
+    waktu       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_db     VARCHAR(100) DEFAULT NULL
 );
 
 CREATE TABLE laporan_harian (
@@ -119,12 +113,12 @@ INSERT INTO diskon (min_qty, persen_diskon, keterangan) VALUES
 (10, 10.00, 'Diskon pembelian minimal 10 item'),
 (20, 15.00, 'Diskon pembelian minimal 20 item');
 
+-- Verifikasi total data dummy (31 baris)
 SELECT
     (SELECT COUNT(*) FROM kategori) +
     (SELECT COUNT(*) FROM produk) +
     (SELECT COUNT(*) FROM pelanggan) +
     (SELECT COUNT(*) FROM diskon) AS total_data_dummy;
-
 
 EXPLAIN SELECT * FROM produk IGNORE INDEX (PRIMARY) WHERE nama_produk = 'Beras 5kg';
 EXPLAIN SELECT * FROM transaksi WHERE tanggal_transaksi >= CURDATE();
@@ -135,8 +129,3 @@ CREATE INDEX idx_produk_detail ON detail_transaksi(produk_id);
 
 EXPLAIN SELECT * FROM produk WHERE nama_produk = 'Beras 5kg';
 EXPLAIN SELECT * FROM transaksi WHERE tanggal_transaksi >= CURDATE();
-
-SELECT COUNT(*) AS jumlah_produk FROM produk;
-SELECT COUNT(*) AS jumlah_pelanggan FROM pelanggan;
-SHOW INDEX FROM produk;
-SHOW INDEX FROM transaksi;
