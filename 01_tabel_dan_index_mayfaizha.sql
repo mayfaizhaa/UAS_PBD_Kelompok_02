@@ -14,13 +14,15 @@ CREATE TABLE produk (
     harga         DECIMAL(12,2) NOT NULL,
     stok          INT NOT NULL DEFAULT 0,
     CONSTRAINT fk_produk_kategori
-        FOREIGN KEY (kategori_id) REFERENCES kategori(kategori_id)
+        FOREIGN KEY (kategori_id) REFERENCES kategori(kategori_id),
+    CONSTRAINT chk_produk_harga CHECK (harga > 0),
+    CONSTRAINT chk_produk_stok CHECK (stok >= 0)
 );
 
 CREATE TABLE pelanggan (
     pelanggan_id   INT AUTO_INCREMENT PRIMARY KEY,
     nama_pelanggan VARCHAR(100) NOT NULL,
-    no_hp          VARCHAR(20),
+    no_hp          VARCHAR(20) UNIQUE,
     poin           INT DEFAULT 0
 );
 
@@ -28,7 +30,9 @@ CREATE TABLE diskon (
     diskon_id      INT AUTO_INCREMENT PRIMARY KEY,
     min_qty        INT NOT NULL,
     persen_diskon  DECIMAL(5,2) NOT NULL,
-    keterangan     VARCHAR(100)
+    keterangan     VARCHAR(100),
+    CONSTRAINT chk_diskon_qty CHECK (min_qty > 0),
+    CONSTRAINT chk_diskon_persen CHECK (persen_diskon BETWEEN 0 AND 100)
 );
 
 CREATE TABLE transaksi (
@@ -53,7 +57,9 @@ CREATE TABLE detail_transaksi (
     CONSTRAINT fk_detail_transaksi
         FOREIGN KEY (transaksi_id) REFERENCES transaksi(transaksi_id),
     CONSTRAINT fk_detail_produk
-        FOREIGN KEY (produk_id) REFERENCES produk(produk_id)
+        FOREIGN KEY (produk_id) REFERENCES produk(produk_id),
+    -- REVISI: qty pembelian minimal 1
+    CONSTRAINT chk_detail_qty CHECK (qty > 0)
 );
 
 CREATE TABLE audit_log (
@@ -63,6 +69,8 @@ CREATE TABLE audit_log (
     id_data     INT,
     data_lama   TEXT,
     data_baru   TEXT,
+    -- REVISI: kolom baru untuk mencatat user/koneksi yang melakukan perubahan
+    user_db     VARCHAR(50) DEFAULT (CURRENT_USER()),
     waktu       DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
