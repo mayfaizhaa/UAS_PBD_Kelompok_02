@@ -139,4 +139,4 @@ EXPLAIN SELECT * FROM transaksi WHERE tanggal_transaksi >= CURDATE();
 SELECT COUNT(*) AS jumlah_produk FROM produk;
 SELECT COUNT(*) AS jumlah_pelanggan FROM pelanggan;
 SHOW INDEX FROM produk;
-SHOW INDEX FROM transaksi;
+SHOW INDEX FROM transaks
