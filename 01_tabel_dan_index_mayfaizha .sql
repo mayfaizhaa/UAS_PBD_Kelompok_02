@@ -76,13 +76,6 @@ CREATE TABLE laporan_harian (
     dibuat_pada        DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Mempercepat pencarian produk oleh kasir saat mengetik nama barang
-CREATE INDEX idx_nama_produk ON produk(nama_produk);
--- Mempercepat filter laporan penjualan per tanggal/periode
-CREATE INDEX idx_tanggal_transaksi ON transaksi(tanggal_transaksi);
--- Mempercepat JOIN & rekap penjualan per produk pada laporan
-CREATE INDEX idx_produk_detail ON detail_transaksi(produk_id);
-
 INSERT INTO kategori (nama_kategori) VALUES
 ('Sembako'), ('Minuman'), ('Snack'), ('Kebersihan'), ('Perawatan Diri');
 
@@ -108,14 +101,33 @@ INSERT INTO pelanggan (nama_pelanggan, no_hp, poin) VALUES
 ('Budi Santoso', '081234567802', 0),
 ('Citra Ayu', '081234567803', 0),
 ('Dewi Lestari', '081234567804', 0),
-('Eko Prasetyo', '081234567805', 0);
+('Eko Prasetyo', '081234567805', 0),
+('Fitri Handayani', '081234567806', 0),
+('Gilang Ramadhan', '081234567807', 0),
+('Hana Permata', '081234567808', 0);
 
 INSERT INTO diskon (min_qty, persen_diskon, keterangan) VALUES
 (5, 5.00, 'Diskon pembelian minimal 5 item'),
 (10, 10.00, 'Diskon pembelian minimal 10 item'),
 (20, 15.00, 'Diskon pembelian minimal 20 item');
 
--- Verifikasi cepat
+SELECT
+    (SELECT COUNT(*) FROM kategori) +
+    (SELECT COUNT(*) FROM produk) +
+    (SELECT COUNT(*) FROM pelanggan) +
+    (SELECT COUNT(*) FROM diskon) AS total_data_dummy;
+
+
+EXPLAIN SELECT * FROM produk IGNORE INDEX (PRIMARY) WHERE nama_produk = 'Beras 5kg';
+EXPLAIN SELECT * FROM transaksi WHERE tanggal_transaksi >= CURDATE();
+
+CREATE INDEX idx_nama_produk ON produk(nama_produk);
+CREATE INDEX idx_tanggal_transaksi ON transaksi(tanggal_transaksi);
+CREATE INDEX idx_produk_detail ON detail_transaksi(produk_id);
+
+EXPLAIN SELECT * FROM produk WHERE nama_produk = 'Beras 5kg';
+EXPLAIN SELECT * FROM transaksi WHERE tanggal_transaksi >= CURDATE();
+
 SELECT COUNT(*) AS jumlah_produk FROM produk;
 SELECT COUNT(*) AS jumlah_pelanggan FROM pelanggan;
 SHOW INDEX FROM produk;
