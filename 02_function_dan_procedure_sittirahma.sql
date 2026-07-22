@@ -1,11 +1,3 @@
--- =====================================================================
--- BAGIAN 2 dari 4 — SISTEM BASIS DATA KASIR MINIMARKET
--- PIC: Sitti Rahma
--- Isi: FUNCTION (minimal 2) dan STORED PROCEDURE (minimal 3),
---      termasuk implementasi CURSOR pada laporan penjualan harian
--- Jalankan SETELAH file 01_tabel_dan_index_mayfaizha.sql
--- =====================================================================
-
 USE kasir_minimarket;
 
 -- =====================================================================
