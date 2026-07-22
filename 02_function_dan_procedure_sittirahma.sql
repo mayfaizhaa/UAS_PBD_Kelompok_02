@@ -1,15 +1,26 @@
+-- =====================================================================
+-- BAGIAN 2 dari 4 — SISTEM BASIS DATA KASIR MINIMARKET
+-- PIC: Sitti Rahma
+-- Isi: FUNCTION (minimal 2) dan STORED PROCEDURE (minimal 3),
+--      termasuk implementasi CURSOR pada laporan penjualan harian
+-- Jalankan SETELAH file 01_tabel_dan_index_mayfaizha.sql
+-- =====================================================================
+
 USE kasir_minimarket;
 
--- ==========================================
--- FUNCTION
--- ==========================================
+-- =====================================================================
+-- 1. FUNCTION
+-- =====================================================================
+-- CATATAN: jika muncul error "This function has none of DETERMINISTIC..."
+-- saat membuat function di bawah, jalankan sekali saja sebelumnya:
+-- SET GLOBAL log_bin_trust_function_creators = 1;
 
 DELIMITER $$
 
--- Function hitung diskon
+-- Function 1: menghitung nilai diskon berdasarkan qty & harga
 CREATE FUNCTION fn_hitung_diskon(p_qty INT, p_harga DECIMAL(12,2))
 RETURNS DECIMAL(12,2)
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     DECLARE v_persen DECIMAL(5,2) DEFAULT 0;
     DECLARE v_nilai_diskon DECIMAL(12,2) DEFAULT 0;
@@ -28,10 +39,10 @@ BEGIN
     RETURN v_nilai_diskon;
 END$$
 
--- Function total terjual per produk
+-- Function 2: menghitung total qty terjual untuk sebuah produk
 CREATE FUNCTION fn_total_terjual(p_produk_id INT)
 RETURNS INT
-DETERMINISTIC
+READS SQL DATA
 BEGIN
     DECLARE v_total INT DEFAULT 0;
     SELECT IFNULL(SUM(qty), 0) INTO v_total
@@ -42,13 +53,13 @@ END$$
 
 DELIMITER ;
 
--- ==========================================
--- STORED PROCEDURE
--- ==========================================
+-- =====================================================================
+-- 2. STORED PROCEDURE
+-- =====================================================================
 
 DELIMITER $$
 
--- Procedure tambah transaksi
+-- Procedure 1: membuka transaksi baru (header)
 CREATE PROCEDURE sp_tambah_transaksi(
     IN  p_pelanggan_id INT,
     OUT p_transaksi_id INT
@@ -67,7 +78,7 @@ BEGIN
     COMMIT;
 END$$
 
--- Procedure tambah detail transaksi
+-- Procedure 2: menambah item ke detail transaksi
 CREATE PROCEDURE sp_tambah_detail_transaksi(
     IN p_transaksi_id INT,
     IN p_produk_id    INT,
@@ -97,6 +108,7 @@ BEGIN
     SET v_diskon   = fn_hitung_diskon(p_qty, v_harga);
     SET v_subtotal = (v_harga * p_qty) - v_diskon;
 
+    -- Trigger trg_validasi_stok & trg_kurangi_stok (dibuat oleh Azizah) berjalan di sini
     INSERT INTO detail_transaksi (transaksi_id, produk_id, qty, harga_satuan, subtotal)
     VALUES (p_transaksi_id, p_produk_id, p_qty, v_harga, v_subtotal);
 
@@ -109,7 +121,7 @@ BEGIN
     COMMIT;
 END$$
 
--- Procedure selesaikan transaksi
+-- Procedure 3: menyelesaikan transaksi (pembayaran & kembalian)
 CREATE PROCEDURE sp_selesaikan_transaksi(
     IN  p_transaksi_id INT,
     IN  p_bayar        DECIMAL(12,2),
@@ -142,7 +154,7 @@ BEGIN
     COMMIT;
 END$$
 
--- Procedure laporan penjualan harian
+-- Procedure 4: laporan penjualan harian menggunakan CURSOR
 CREATE PROCEDURE sp_laporan_penjualan_harian(
     IN p_tanggal DATE
 )
@@ -185,3 +197,6 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- Uji cepat function (aman dijalankan meski data transaksi belum ada)
+SELECT fn_hitung_diskon(10, 10000) AS contoh_diskon;
